@@ -1,0 +1,96 @@
+# When a maintainer adds the "accepted" label to an issue made with the idea
+# form, this writes the idea file with the next free id and opens a pull request.
+#
+# The issue text is untrusted. It is never interpolated into a shell command:
+# the Python converter reads it from the event file, and the shell below only
+# sees values the converter built from a fixed alphabet.
+name: Idea from issue
+
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+# One at a time, so two accepted issues cannot be given the same id.
+concurrency:
+  group: idea-from-issue
+  cancel-in-progress: false
+
+jobs:
+  convert:
+    if: github.event.label.name == 'accepted' && contains(github.event.issue.labels.*.name, 'idea')
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      ISSUE: ${{ github.event.issue.number }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+
+      - name: Convert the issue
+        id: convert
+        run: |
+          refs="$(git ls-remote --heads origin 'idea/OOT-*')"
+          if printf '%s\n' "$refs" | grep -q -- "-issue-$ISSUE\$"; then
+            gh issue comment "$ISSUE" --body "A pull request for this issue already exists, so nothing new was created."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          set +e
+          python -m out_of_tokens from-issue --event "$GITHUB_EVENT_PATH" \
+            --reserved-refs "$refs" > "$RUNNER_TEMP/result.txt"
+          code=$?
+          set -e
+          if [ "$code" -eq 2 ]; then
+            {
+              echo "This idea could not be added yet. Please edit the issue to fix the following, then ask a maintainer to accept it again:"
+              echo
+              cat "$RUNNER_TEMP/result.txt"
+            } > "$RUNNER_TEMP/comment.md"
+            gh issue comment "$ISSUE" --body-file "$RUNNER_TEMP/comment.md"
+            gh issue edit "$ISSUE" --remove-label accepted
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          exit "$code"
+
+      - name: Validate the new file
+        if: steps.convert.outputs.skip != 'true'
+        run: python -m out_of_tokens validate
+
+      - name: Open the pull request
+        if: steps.convert.outputs.skip != 'true'
+        env:
+          IDEA_ID: ${{ steps.convert.outputs.id }}
+          IDEA_PATH: ${{ steps.convert.outputs.path }}
+          BRANCH: ${{ steps.convert.outputs.branch }}
+          AUTHOR_LOGIN: ${{ github.event.issue.user.login }}
+          AUTHOR_ID: ${{ github.event.issue.user.id }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$BRANCH"
+          git add -- "$IDEA_PATH"
+          # The submitter is the commit author, so the history names them.
+          git commit -m "Add idea $IDEA_ID (from #$ISSUE)" \
+            --author "$AUTHOR_LOGIN <$AUTHOR_ID+$AUTHOR_LOGIN@users.noreply.github.com>"
+          git push origin "$BRANCH"
+          {
+            echo "Adds idea **$IDEA_ID** from #$ISSUE, submitted by @$AUTHOR_LOGIN."
+            echo
+            echo "The file passed schema validation in the workflow that created it. Checks do not start on their own for a pull request opened by a workflow; close and reopen this pull request to run them."
+            echo
+            echo "Closes #$ISSUE"
+          } > "$RUNNER_TEMP/pr.md"
+          gh pr create --head "$BRANCH" --title "Add idea $IDEA_ID (from #$ISSUE)" \
+            --body-file "$RUNNER_TEMP/pr.md"

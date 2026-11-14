@@ -1,0 +1,111 @@
+name: Share an idea
+description: Put an idea you could not finish on the public record, with your name on it.
+title: "Idea: "
+labels: ["idea"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for sharing. Before you fill this in, three things you should know:
+
+        - Everything you write here is **public and permanent**. Do not share anything you want to keep secret, patent later, or that belongs to an employer or client.
+        - Your text is published under **CC BY 4.0**. Anyone may build the idea. This project asks builders to credit you, and keeps a public record that you shared it first, but **no licence can force someone to credit an idea**. See the README section "What this can and cannot do".
+        - A maintainer reviews the issue. When it is accepted, a pull request adds it to the registry with the next free id.
+  - type: input
+    id: title
+    attributes:
+      label: Idea title
+      description: One line, 5 to 120 characters.
+    validations:
+      required: true
+  - type: textarea
+    id: authors
+    attributes:
+      label: Authors
+      description: |
+        One person per line, as they should be credited. After the name you may add a GitHub handle, an ORCID and a URL, in any order. Leave empty to be credited by your GitHub username.
+      placeholder: |
+        Ada Example @ada-example 0000-0002-1825-0097 https://ada.example
+        Second Person
+    validations:
+      required: false
+  - type: input
+    id: tags
+    attributes:
+      label: Tags
+      description: One to eight, separated by commas. Lowercase words and hyphens.
+      placeholder: civic-tech, summarisation
+    validations:
+      required: true
+  - type: dropdown
+    id: why_unfinished
+    attributes:
+      label: Why is it unfinished?
+      description: Choose every reason that applies.
+      multiple: true
+      options:
+        - llm-api-cost
+        - gpu-cost
+        - compute-cost
+        - data-cost
+        - hosting-cost
+        - funding
+        - time
+        - team
+        - other
+    validations:
+      required: true
+  - type: input
+    id: estimated_cost
+    attributes:
+      label: Estimated cost to build
+      description: Your best guess, in your own words. Say what the money or compute is for.
+      placeholder: About USD 3,000 in API calls for the first evaluation run
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What is wrong or missing today, and for whom?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Idea
+      description: What would you build?
+    validations:
+      required: true
+  - type: textarea
+    id: approach
+    attributes:
+      label: Approach
+      description: How would you build it? Say where the cost comes from.
+    validations:
+      required: true
+  - type: textarea
+    id: done
+    attributes:
+      label: What's done
+      description: What exists already, and where did you stop? "Nothing yet" is a fine answer.
+    validations:
+      required: true
+  - type: textarea
+    id: links
+    attributes:
+      label: Links to partial code or notes
+      description: Repositories, notebooks, write-ups. Optional.
+    validations:
+      required: false
+  - type: checkboxes
+    id: agreement
+    attributes:
+      label: Agreement
+      options:
+        - label: This is my own idea (or I am submitting with every listed author's consent), and I have the right to share it.
+          required: true
+        - label: I license the text of this submission under CC BY 4.0, and I understand it is public and cannot be taken back.
+          required: true
+        - label: I understand that crediting is a community norm here and not something a licence can enforce for an idea.
+          required: true

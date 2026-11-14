@@ -1,0 +1,62 @@
+# Optional. For each idea on main that has no proof yet, freezes a copy of the
+# file under proofs/<id>/ and stamps it with OpenTimestamps (free, no account).
+# Also tries to complete proofs that were still pending. The result comes as a
+# pull request, so main can stay protected.
+#
+# Delete this file if you do not want it; nothing else depends on it.
+name: Timestamp
+
+on:
+  push:
+    branches: [main]
+    paths: ["ideas/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: timestamp
+  cancel-in-progress: false
+
+jobs:
+  stamp:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install opentimestamps-client
+      - name: Stamp new ideas and upgrade pending proofs
+        run: |
+          shopt -s nullglob
+          for proof in proofs/*/idea.md.ots; do
+            ots upgrade "$proof" || true   # fails while Bitcoin has not confirmed it
+            rm -f "$proof.bak"
+          done
+          for file in ideas/*/OOT-*.md; do
+            id="$(basename "$file" | grep -oE '^OOT-[0-9]+')"
+            [ -e "proofs/$id/idea.md" ] && continue
+            mkdir -p "proofs/$id"
+            cp "$file" "proofs/$id/idea.md"
+            ots stamp "proofs/$id/idea.md"
+          done
+      - name: Open a pull request with the proofs
+        run: |
+          git add proofs
+          if git diff --cached --quiet; then
+            echo "Nothing new to record."
+            exit 0
+          fi
+          branch="proofs/run-$GITHUB_RUN_ID"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git commit -m "Add or upgrade OpenTimestamps proofs"
+          git push origin "$branch"
+          gh pr create --head "$branch" --title "Add or upgrade OpenTimestamps proofs" \
+            --body "Adds proofs for newly merged ideas and completes pending ones. See proofs/README.md for how to verify them."

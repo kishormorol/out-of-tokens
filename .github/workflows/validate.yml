@@ -1,0 +1,37 @@
+# Checks every pull request and every push to main: unit tests, the idea schema,
+# the frozen attribution fields, and a site build as a smoke test.
+name: Validate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # the base branch is needed to compare frozen fields
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+      - name: Unit tests
+        run: python -m pytest -q
+      - name: Validate ideas
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          if [ -n "$BASE_REF" ]; then
+            python -m out_of_tokens validate --base "origin/$BASE_REF"
+          else
+            python -m out_of_tokens validate
+          fi
+      - name: Build site (smoke test)
+        run: python -m out_of_tokens build --out "$RUNNER_TEMP/site"

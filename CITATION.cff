@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: "To cite the registry as a whole, use this entry. To cite one idea, cite its authors with the BibTeX entry on the idea's page."
+title: "Out of Tokens: a public registry of unfinished ideas"
+type: dataset
+authors:
+  - family-names: "Morol"
+    given-names: "Kishor"
+    orcid: "https://orcid.org/0000-0002-4468-8260"
+  - name: "Out of Tokens contributors"
+license:
+  - MIT
+  - CC-BY-4.0
