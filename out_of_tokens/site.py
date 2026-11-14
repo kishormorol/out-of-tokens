@@ -18,7 +18,7 @@ from xml.sax.saxutils import escape as xml_escape
 
 from markdown_it import MarkdownIt
 
-from .ideas import CATEGORIES, Idea, section_text
+from .ideas import CATEGORIES, Idea, build_stage, section_text
 from .pdf import html_to_pdf
 
 STATIC_DIR = Path(__file__).parent / "static"
@@ -265,6 +265,9 @@ def _author_html(author: dict) -> str:
 def _chips(idea: Idea) -> str:
     meta = idea.meta
     chips = [f'<span class="chip status-{meta["status"]}">{STATUS_LABELS[meta["status"]]}</span>']
+    n_building = sum(1 for b in meta.get("built_from_this", []) if build_stage(b) == "building")
+    if n_building:
+        chips.append(f'<span class="chip building">{n_building} building</span>')
     chips += [f'<span class="chip why">{escape(WHY_LABELS[w])}</span>' for w in meta["why_unfinished"]]
     chips += [f'<span class="chip tag">#{escape(t)}</span>' for t in meta["tags"]]
     if meta.get("example"):
@@ -482,15 +485,28 @@ def render_idea(
     category = meta["category"]
     label = f"{idea.id}v{shown.version}"
     page_url = version_url(idea, view.version, site_url) if view else idea_url(idea, site_url)
-    if built:
-        items = "".join(
-            f'<li><a rel="nofollow noopener" href="{escape(b["url"])}">{escape(b["name"])}</a>'
-            f' by {escape(b["by"])}{" (" + str(b["date"]) + ")" if "date" in b else ""}</li>'
-            for b in built
+    def _project_items(entries):
+        return "".join(
+            "<li>"
+            + (
+                f'<a rel="nofollow noopener" href="{escape(b["url"])}">{escape(b["name"])}</a>'
+                if "url" in b
+                else escape(b["name"])
+            )
+            + f' by {escape(b["by"])}{" (" + ("since " if build_stage(b) == "building" else "") + str(b["date"]) + ")" if "date" in b else ""}</li>'
+            for b in entries
         )
-        built_html = f"<ul>{items}</ul>"
+
+    building = [b for b in built if build_stage(b) == "building"]
+    finished = [b for b in built if build_stage(b) == "built"]
+    built_html = f"<ul>{_project_items(finished)}</ul>" if finished else "<p>Nothing yet.</p>"
+    if building:
+        building_html = (
+            f"<ul>{_project_items(building)}</ul>"
+            "<p class=\"meta\">Thinking of building it too? Contact them first, or build a different take.</p>"
+        )
     else:
-        built_html = "<p>Nothing yet.</p>"
+        building_html = "<p>Nobody has said they are building this yet.</p>"
 
     notices = []
     if meta.get("example"):
@@ -572,11 +588,16 @@ def render_idea(
 <p class="meta screen-only">An author can revise an idea with a pull request. Past versions stay
 readable here. <a href="{escape(repo_url)}/blob/main/CONTRIBUTING.md#revise-an-idea">How to revise</a>.</p>
 </section>
+<section class="building screen-only">
+<h2>Building now</h2>
+{building_html}
+</section>
 <section class="built screen-only">
 <h2>Built from this</h2>
 {built_html}
-<p class="meta">Built it, or building it? <a href="{escape(edit_url)}">Add your project</a>
-to <code>built_from_this</code> with a pull request.</p>
+<p class="meta">Building it, or built it? <a href="{escape(edit_url)}">Add your project</a>
+to <code>built_from_this</code> with a pull request. Use <code>stage: building</code> while you work on it.
+The authors are told on the pull request.</p>
 </section>
 <section class="credit">
 <h2>Cite and credit this idea</h2>

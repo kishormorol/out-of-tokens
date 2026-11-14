@@ -1,0 +1,53 @@
+# Tells an idea's authors when a pull request adds a project to its
+# built_from_this list, by mentioning their GitHub accounts in a comment.
+#
+# It runs on pull_request_target so it can comment on pull requests from forks.
+# For that reason it only runs code from main: the pull request's idea file is
+# downloaded as data and read with a YAML parser, never executed.
+name: Notify authors
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+    paths: ["ideas/**"]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      PR: ${{ github.event.pull_request.number }}
+      HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Write the comment
+        run: |
+          : > comment.md
+          gh api "repos/$GH_REPO/pulls/$PR/files" --paginate --jq '.[].filename' \
+            | grep -E '^ideas/[0-9]{4}/OOT-[0-9]+-[a-z0-9-]+\.md$' > changed.txt || true
+          while read -r path; do
+            id="$(basename "$path" | grep -oE '^OOT-[0-9]+')"
+            gh api -H "Accept: application/vnd.github.raw" \
+              "repos/$HEAD_REPO/contents/$path?ref=$HEAD_SHA" > head.md 2>/dev/null || : > head.md
+            python -m out_of_tokens notify-builders --id "$id" --base "$path" --head head.md >> comment.md
+          done < changed.txt
+      - name: Post or update the comment
+        run: |
+          if [ ! -s comment.md ]; then
+            echo "No new projects in this pull request."
+            exit 0
+          fi
+          gh pr comment "$PR" --body-file comment.md --edit-last 2>/dev/null \
+            || gh pr comment "$PR" --body-file comment.md

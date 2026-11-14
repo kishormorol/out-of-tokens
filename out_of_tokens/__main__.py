@@ -227,6 +227,17 @@ def cmd_zenodo(args) -> int:
     return 1 if failed else 0
 
 
+def cmd_notify_builders(args) -> int:
+    from . import notify
+
+    base = Path(args.base).read_text(encoding="utf-8") if Path(args.base).is_file() else ""
+    head = Path(args.head).read_text(encoding="utf-8") if Path(args.head).is_file() else ""
+    text = notify.comment(args.id, base, head)
+    if text:
+        print(text)
+    return 0
+
+
 def cmd_next_id(args) -> int:
     print(ideas.next_id([i.id for i in ideas.load_all(args.root)]))
     return 0
@@ -291,6 +302,12 @@ def main(argv=None) -> int:
     p.add_argument("--dry-run", action="store_true", help="print what would be sent and stop")
     p.add_argument("--limit", type=int, default=10, help="most versions to deposit in one run")
     p.set_defaults(func=cmd_zenodo)
+
+    p = sub.add_parser("notify-builders", help="comment text telling authors about new projects")
+    p.add_argument("--id", required=True, help="idea id, e.g. OOT-0003")
+    p.add_argument("--base", required=True, help="the idea file as it is on main")
+    p.add_argument("--head", required=True, help="the idea file as it is in the pull request")
+    p.set_defaults(func=cmd_notify_builders)
 
     p = sub.add_parser("next-id", help="print the next free idea id")
     p.set_defaults(func=cmd_next_id)
