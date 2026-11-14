@@ -138,6 +138,9 @@ def build_idea(
     parts = []
     for key, heading in BODY_SECTIONS:
         text = form.get(key, "")
+        if not text and key == "done":
+            # Issues opened through the API or CLI skip the form's required check.
+            text = "Nothing yet."
         if text:
             parts.append(f"## {heading}\n\n{text}")
     body = "\n" + "\n\n".join(parts) + "\n"

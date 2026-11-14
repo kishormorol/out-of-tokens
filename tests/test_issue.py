@@ -120,3 +120,11 @@ def test_slugify():
     assert issue.slugify("আইডিয়া") == "idea"
     assert len(issue.slugify("word " * 40)) <= 50
     assert not issue.slugify("word " * 40).endswith("-")
+
+
+def test_empty_whats_done_becomes_nothing_yet():
+    # Issues opened through the API or CLI skip the form's required check.
+    path, text = issue.build_idea(gh_issue(**{"What's done": "_No response_"}), "OOT-0003")
+    idea = ideas.load_text(path, text, dt.date(2026, 11, 14))
+    assert idea.errors == []
+    assert "## What's done\n\nNothing yet." in text
