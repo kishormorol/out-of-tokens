@@ -19,9 +19,11 @@ from . import ideas
 FIELDS = (
     ("title", "Idea title"),
     ("authors", "Authors"),
+    ("category", "Subject category"),
     ("tags", "Tags"),
     ("why_unfinished", "Why is it unfinished?"),
     ("estimated_cost", "Estimated cost to build"),
+    ("abstract", "Abstract"),
     ("problem", "Problem"),
     ("idea", "Idea"),
     ("approach", "Approach"),
@@ -29,6 +31,10 @@ FIELDS = (
     ("links", "Links to partial code or notes"),
     ("agreement", "Agreement"),
 )
+
+# Fields the first edition of the form did not have. An issue without them is
+# still read; the validator then says what is missing.
+ADDED_LATER = ("category", "abstract")
 
 NO_RESPONSE = "_No response_"
 BODY_SECTIONS = (
@@ -55,17 +61,21 @@ def parse_form(body: str) -> dict[str, str]:
     result: dict[str, str] = {}
     start, key, expect = None, None, 0
     for i, line in enumerate(lines + [None]):
-        is_next = (
-            line is not None
-            and expect < len(FIELDS)
-            and line.strip() == f"### {FIELDS[expect][1]}"
-        )
-        if line is None or is_next:
+        # The next label is the next field, or the one after the fields that
+        # an issue made with the form's first edition does not have.
+        found = None
+        if line is not None and line.startswith("### "):
+            for n in range(expect, len(FIELDS)):
+                if line.strip() == f"### {FIELDS[n][1]}":
+                    found = n
+                if found is not None or FIELDS[n][0] not in ADDED_LATER:
+                    break
+        if line is None or found is not None:
             if key is not None:
                 text = "\n".join(lines[start:i]).strip()
                 result[key] = "" if text == NO_RESPONSE else text
-            if is_next:
-                key, start, expect = FIELDS[expect][0], i + 1, expect + 1
+            if found is not None:
+                key, start, expect = FIELDS[found][0], i + 1, found + 1
     return result
 
 
@@ -131,10 +141,14 @@ def build_idea(
         "authors": parse_authors(form.get("authors", ""), login),
         "submitted": today,
         "status": "open",
+        "category": form.get("category", "").strip(),
         "tags": parse_tags(form.get("tags", "")),
         "why_unfinished": [w.strip() for w in form.get("why_unfinished", "").split(",") if w.strip()],
         "estimated_cost": " ".join(form.get("estimated_cost", "").split()),
     }
+    abstract = " ".join(form.get("abstract", "").split())
+    if abstract:
+        meta["abstract"] = abstract
     parts = []
     for key, heading in BODY_SECTIONS:
         text = form.get(key, "")

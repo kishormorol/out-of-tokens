@@ -1,0 +1,108 @@
+# Gives each accepted idea version a DOI by depositing it on Zenodo.
+#
+# This workflow does nothing until a maintainer adds the repository secret
+# ZENODO_TOKEN. Without the secret it ends after the first step with a notice.
+# MAINTAINERS.md says how to switch it on and how to try it on Zenodo's sandbox.
+#
+# It runs only on pushes to main and by hand, never on pull requests, so code
+# from a pull request cannot reach the token. The DOIs come back as a pull
+# request, so main can stay protected.
+name: Zenodo DOI
+
+on:
+  push:
+    branches: [main]
+    paths: ["ideas/**", "versions/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+# One at a time, so two runs cannot deposit the same version.
+concurrency:
+  group: zenodo
+  cancel-in-progress: false
+
+jobs:
+  deposit:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Check that Zenodo is switched on
+        id: gate
+        env:
+          HAS_TOKEN: ${{ secrets.ZENODO_TOKEN != '' }}
+        run: |
+          if [ "$HAS_TOKEN" != "true" ]; then
+            echo "::notice::Zenodo deposits are off because the ZENODO_TOKEN secret is not set. Nothing was deposited. See MAINTAINERS.md."
+            echo "on=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # A DOI pull request that is still open means main does not yet know
+          # about the last deposits. Wait for it instead of risking a repeat.
+          open="$(gh pr list --state open --limit 200 --json headRefName \
+            --jq '[.[] | select(.headRefName | startswith("zenodo/"))] | length')"
+          if [ "$open" != "0" ]; then
+            echo "::notice::A pull request with DOIs is still open. Merge it; this workflow runs again after the merge."
+            echo "on=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "on=true" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v7
+        if: steps.gate.outputs.on == 'true'
+      - uses: actions/setup-python@v7
+        if: steps.gate.outputs.on == 'true'
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install the tools and fonts for the PDF files
+        if: steps.gate.outputs.on == 'true'
+        run: |
+          pip install -r requirements.txt
+          sudo apt-get install -y --no-install-recommends fonts-noto-core fonts-noto-cjk \
+            || echo "::warning::Could not install Noto fonts; PDF files may lack some scripts."
+
+      - name: Deposit versions that have no DOI
+        id: deposit
+        if: steps.gate.outputs.on == 'true'
+        env:
+          ZENODO_TOKEN: ${{ secrets.ZENODO_TOKEN }}
+          ZENODO_SANDBOX: ${{ vars.ZENODO_SANDBOX }}
+        run: |
+          set +e
+          python -m out_of_tokens zenodo
+          echo "code=$?" >> "$GITHUB_OUTPUT"
+
+      - name: Open a pull request with the DOIs
+        if: steps.gate.outputs.on == 'true'
+        run: |
+          git add ideas
+          if git diff --cached --quiet; then
+            echo "No DOI to record."
+            exit 0
+          fi
+          python -m out_of_tokens validate
+          branch="zenodo/run-$GITHUB_RUN_ID"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git commit -m "Record Zenodo DOIs"
+          git push origin "$branch"
+          {
+            echo "Writes the DOIs that Zenodo gave to newly deposited idea versions into their front matter."
+            echo
+            echo "The records are already published on Zenodo. Merge this soon: until it is merged, no further deposits are made."
+            echo
+            echo "Checks do not start on their own for a pull request opened by a workflow; close and reopen this pull request to run them."
+          } > "$RUNNER_TEMP/pr.md"
+          gh pr create --head "$branch" --title "Record Zenodo DOIs" --body-file "$RUNNER_TEMP/pr.md"
+
+      - name: Report a failed deposit
+        if: steps.gate.outputs.on == 'true' && steps.deposit.outputs.code != '0'
+        run: |
+          echo "::error::At least one deposit failed. See the log of the deposit step."
+          exit 1

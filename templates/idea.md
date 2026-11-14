@@ -6,9 +6,14 @@ authors:
     github: your-handle
 submitted: 2026-01-31
 status: open
+category: other             # one of the categories in CONTRIBUTING.md
 tags: [first-tag, second-tag]
 why_unfinished: [llm-api-cost]
 estimated_cost: "About USD 0,000 for what, over how long"
+abstract: >-
+  Optional. Two to five plain sentences that say what the problem is and what you
+  would build. Leave this field out and the site uses the first paragraphs of
+  Problem and Idea.
 ---
 
 ## Problem

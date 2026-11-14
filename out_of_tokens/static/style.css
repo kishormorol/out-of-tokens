@@ -67,6 +67,7 @@ h2 { font-size: 1.2rem; margin: 32px 0 8px; }
 .chip.status-open, .chip.status-being-built, .chip.status-built {
   background: none; border: 1px solid var(--accent); color: var(--accent);
 }
+.chip.status-withdrawn { background: none; border: 1px solid var(--muted); color: var(--muted); }
 .chip.example, .notice { background: var(--warn-bg); color: var(--warn-text); }
 .notice { padding: 10px 14px; border-radius: 8px; margin: 16px 0 0; }
 .body { overflow-wrap: anywhere; }
@@ -91,4 +92,53 @@ h2 { font-size: 1.2rem; margin: 32px 0 8px; }
 .links { color: var(--muted); font-size: 0.9em; }
 .body blockquote {
   margin: 12px 0; padding: 2px 14px; border-left: 3px solid var(--line); color: var(--muted);
+}
+.notice.withdrawn { border-left: 4px solid var(--warn-text); }
+.notice.old { background: var(--chip); color: var(--text); }
+.lead { color: var(--muted); max-width: 62ch; margin-top: 0; }
+.authors { margin: 4px 0 8px; }
+.abstract { margin-top: 20px; }
+.abstract h2 { margin: 0 0 4px; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+.abstract p { margin: 0 0 8px; }
+.record {
+  display: grid; grid-template-columns: max-content 1fr; gap: 2px 16px;
+  margin: 16px 0; padding: 12px 16px; font-size: 0.9rem;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+}
+.record dt { color: var(--muted); }
+.record dd { margin: 0; overflow-wrap: anywhere; min-width: 0; }
+.actions { margin: 16px 0 0; }
+.button {
+  display: inline-block; font: inherit; font-size: 0.95rem; font-weight: 600; cursor: pointer;
+  color: var(--bg); background: var(--accent); border: 0; border-radius: 6px;
+  padding: 7px 16px; text-decoration: none;
+}
+ul.plain { list-style: none; padding: 0; margin: 8px 0; }
+ul.plain li { padding: 4px 0; overflow-wrap: anywhere; }
+ul.plain li[aria-current] { font-weight: 600; }
+.versions { border-top: 1px solid var(--line); margin-top: 32px; }
+.card .meta a { color: inherit; }
+.print-only { display: none; }
+@media (max-width: 520px) {
+  .record { grid-template-columns: 1fr; gap: 0; }
+  .record dd { margin-bottom: 6px; }
+}
+@media print {
+  :root {
+    --bg: #fff; --surface: #fff; --text: #000; --muted: #444; --line: #bbb;
+    --accent: #000; --chip: #f2f2f2; --warn-bg: #f2f2f2; --warn-text: #000;
+  }
+  @page { margin: 18mm 16mm; }
+  body { font-size: 11pt; line-height: 1.45; }
+  header.site, footer.site, .crumb, .screen-only, .copy-btn, .chips { display: none !important; }
+  .print-only { display: block; }
+  .authors .links { display: none; }
+  .print-head { font-size: 8.5pt; color: #444; border-bottom: 1px solid #bbb; padding-bottom: 4pt; margin: 0 0 10pt; overflow-wrap: anywhere; }
+  main { max-width: none; padding: 0; }
+  h1 { font-size: 18pt; margin-top: 0; }
+  h2 { font-size: 12.5pt; break-after: avoid; }
+  a { color: inherit; text-decoration: none; }
+  .body a::after { content: " (" attr(href) ")"; font-size: 0.85em; overflow-wrap: anywhere; }
+  .record, .copy pre, .body pre, .notice { border: 1px solid #bbb; background: none; }
+  .record, .copy, .notice, .body pre, .body li { break-inside: avoid; }
 }
