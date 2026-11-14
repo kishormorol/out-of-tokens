@@ -2,7 +2,7 @@
 id: OOT-0001
 title: Plain-language summaries of every city council meeting
 authors:
-  - name: Example Author
+  - name: Someone Else
 submitted: 2026-11-14
 status: open
 tags: [civic-tech, summarisation, local-news]
