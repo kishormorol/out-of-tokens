@@ -31,7 +31,7 @@ jobs:
         env:
           SITE_URL: ${{ steps.pages.outputs.base_url }}
         run: python -m out_of_tokens build --out _site --site-url "$SITE_URL"
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: _site
 
