@@ -8,7 +8,7 @@ could pay. Anyone may build an idea from the registry. In return, builders are a
 credit the people who had it.
 
 Each idea is one Markdown file in [`ideas/`](ideas/). The registry runs on GitHub alone: an
-issue form for submissions, three small workflows, and a static site on GitHub Pages. It
+issue form for submissions, four small workflows, and a static site on GitHub Pages. It
 needs only a free GitHub repository, so it costs nothing to keep running.
 
 ## What is in an idea
