@@ -45,8 +45,8 @@ back is what lets the authors, and the next reader, see what became of the idea.
   are frozen, and a check fails any pull request that changes them.
 - The record is public: the Git history of the file, the merged pull request and, where
   enabled, an OpenTimestamps proof in [`proofs/`](proofs/README.md).
-- The idea text is under CC BY 4.0. A person who copies or adapts the text itself must give
-  credit by law.
+- The idea text is under CC BY 4.0. A person who shares a copy or adaptation of the text
+  itself must give credit under the licence.
 
 ## When credit is missing
 

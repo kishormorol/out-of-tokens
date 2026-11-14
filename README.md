@@ -45,13 +45,14 @@ credit you, pay you or ask you first.
 **What the registry gives you instead:**
 
 1. **A licence on your text.** The write-up of each idea is licensed
-   [CC BY 4.0](LICENSE-CONTENT). Anyone who copies, translates or adapts your text must
-   credit you. That duty covers the text, and it stops there.
+   [CC BY 4.0](LICENSE-CONTENT). Anyone who shares a copy, translation or adaptation of
+   your text must credit you. That duty covers the text, and it stops there.
 2. **A public, dated record.** Your idea enters the repository through a merged pull
    request. The Git history, the pull request page and the issue page show who shared it
-   and when. GitHub records those times, independently of you and the maintainers. An
-   optional workflow adds an [OpenTimestamps](proofs/README.md) proof that is independent
-   of GitHub as well.
+   and when. Git commit dates can be set by whoever makes the commit, so they prove little
+   alone. GitHub sets the times on pull request and issue pages itself. An optional
+   workflow adds an [OpenTimestamps](proofs/README.md) proof that does not depend on
+   GitHub or on the maintainers.
 3. **A norm with a paper trail.** [ATTRIBUTION.md](ATTRIBUTION.md) asks every builder to
    credit the authors, and each idea page gives a ready credit line, a badge and a BibTeX
    entry. Builders list their project under "Built from this" on the idea page. A builder
@@ -61,9 +62,10 @@ credit you, pay you or ask you first.
 
 - Your idea becomes public and stays public. Git history and forks keep a copy even if the
   file is removed later.
-- Publishing an idea can end your own chance to patent it, at once in many countries and
-  after a grace period in others. It also makes the idea prior art, which makes it harder
-  for anyone else to patent it.
+- Publishing an idea can end your own chance to patent it. Many countries, including most
+  of Europe, refuse a patent once the idea is public. The United States gives you one year
+  from your own publication to file. Publishing also makes the idea prior art, which makes
+  it harder for anyone else to patent it.
 - Do not share anything secret, anything you may want to patent, or anything that belongs
   to an employer, a client or a co-author who has not agreed.
 
