@@ -69,6 +69,7 @@ h2 { font-size: 1.2rem; margin: 32px 0 8px; }
 }
 .chip.status-withdrawn { background: none; border: 1px solid var(--muted); color: var(--muted); }
 .chip.example, .notice { background: var(--warn-bg); color: var(--warn-text); }
+.chip.building { background: var(--accent); color: var(--bg); }
 .notice { padding: 10px 14px; border-radius: 8px; margin: 16px 0 0; }
 .body { overflow-wrap: anywhere; }
 .body pre, .copy pre {

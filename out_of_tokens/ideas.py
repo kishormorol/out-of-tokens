@@ -189,17 +189,30 @@ def _check_author(author, where: str) -> list[str]:
     return errors
 
 
+BUILD_STAGES = ("building", "built")
+
+
+def build_stage(entry: dict) -> str:
+    """Entries written before 'stage' existed are finished projects."""
+    return entry.get("stage", "built")
+
+
 def _check_built(entry, where: str) -> list[str]:
     if not isinstance(entry, dict):
         return [f"{where}: must be a mapping with 'name', 'url' and 'by'"]
     errors = []
-    unknown = set(entry) - {"name", "url", "by", "date"}
+    unknown = set(entry) - {"name", "url", "by", "date", "stage"}
     if unknown:
         errors.append(f"{where}: unknown keys {sorted(unknown)}")
+    if "stage" in entry and entry["stage"] not in BUILD_STAGES:
+        errors.append(f"{where}: 'stage' must be 'building' or 'built'")
     if not _is_str(entry.get("name"), 100):
         errors.append(f"{where}: 'name' is required")
-    if not (isinstance(entry.get("url"), str) and URL_RE.match(entry["url"])):
-        errors.append(f"{where}: 'url' must be an http(s) URL")
+    # A project that has only started may have nothing to link to yet.
+    url_optional = entry.get("stage") == "building"
+    if "url" in entry or not url_optional:
+        if not (isinstance(entry.get("url"), str) and URL_RE.match(entry["url"])):
+            errors.append(f"{where}: 'url' must be an http(s) URL")
     if not _is_str(entry.get("by"), 100):
         errors.append(f"{where}: 'by' (who built it) is required")
     if "date" in entry and type(entry["date"]) is not dt.date:
@@ -389,8 +402,10 @@ def validate_meta(meta: dict, body: str, today: dt.date | None = None) -> list[s
         built = []
     for i, entry in enumerate(built, 1):
         errors += _check_built(entry, f"built_from_this[{i}]")
-    if meta.get("status") == "built" and not built:
-        errors.append("status 'built' needs at least one entry in 'built_from_this'")
+    if meta.get("status") == "built" and not any(
+        isinstance(b, dict) and build_stage(b) == "built" for b in built
+    ):
+        errors.append("status 'built' needs at least one finished entry in 'built_from_this'")
 
     have = sections(body)
     for name in REQUIRED_SECTIONS:

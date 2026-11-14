@@ -144,8 +144,11 @@ any DOI stay on the record. [CONTRIBUTING.md](CONTRIBUTING.md) describes both in
 2. Build it. Permission is already given.
 3. Credit the authors in your README, paper or about page. The idea page gives the exact
    line to copy. [ATTRIBUTION.md](ATTRIBUTION.md) has the details.
-4. Open a pull request that adds your project to `built_from_this` in the idea file, and
-   sets `status` to `being-built` or `built`.
+4. Before you start, check "Building now" on the idea page. Someone may already be on it.
+5. Open a pull request that adds your project to `built_from_this` in the idea file, with
+   `stage: building` while you work on it (a link is optional then) and `stage: built`
+   when it is done. Set `status` to `being-built` or `built`. A bot mentions the authors on
+   the pull request, so they hear about it.
 
 ```yaml
 status: built
@@ -153,6 +156,7 @@ built_from_this:
   - name: Council Digest
     url: https://example.org/council-digest
     by: Your Name
+    stage: built
     date: 2027-02-01
 ```
 

@@ -38,7 +38,7 @@ Git for this route.
 | `withdrawn` | Only with `status: withdrawn`. A `date` and a one-line `reason`. |
 | `doi` | Written by the Zenodo workflow. Never add one by hand. |
 | `example` | Only for the sample entries. Leave it out. |
-| `built_from_this` | Added later by builders. Each entry has `name`, `url`, `by` and an optional `date`. |
+| `built_from_this` | Added later by builders. Each entry has `name`, `by`, `url`, an optional `date` and an optional `stage`: `building` (shown under "Building now", `url` optional) or `built` (the default). |
 
 The body needs the sections `## Problem`, `## Idea`, `## Approach` and `## What's done`.
 `## Links` is optional. Raw HTML and images are not rendered on the site.

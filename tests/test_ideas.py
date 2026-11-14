@@ -73,7 +73,7 @@ def test_repository_ideas_are_valid():
         ("submitted: 2026-11-01", "submitted: 2026-12-25", "in the future"),
         ("submitted: 2026-11-01", "submitted: 2025-11-01", "folder is 2026"),
         ("status: open", "status: done", "'status' must be one of"),
-        ("status: open", "status: built", "needs at least one entry"),
+        ("status: open", "status: built", "needs at least one finished entry"),
         ("category: dev-tools", "category: cooking", "'category' must be one of"),
         ("category: dev-tools\n", "", "missing required field 'category'"),
         ("status: open", "status: open\nabstract: [a, b]", "'abstract' must be plain text"),
@@ -372,3 +372,17 @@ def test_withdrawing_is_allowed_and_then_permanent(repo):
     write(repo, "versions/OOT-0007/v1.md", withdrawn)
     write(repo, PATH, withdrawn.replace("\np\n", "\nbetter\n").replace("category:", V2 + "category:"))
     assert "a withdrawn idea cannot get a new version" in against_base(repo)[PATH]
+
+
+def test_building_entries_may_skip_the_url():
+    building = GOOD.replace(
+        "status: open",
+        "status: being-built\nbuilt_from_this:\n  - name: Early prototype\n    by: Bo Builder\n"
+        "    stage: building\n    date: 2026-11-14",
+    )
+    assert errors(building) == []
+    assert any("'stage' must be" in e for e in errors(building.replace("stage: building", "stage: soon")))
+    # A finished entry still needs a link, and 'built' needs a finished entry.
+    assert any("'url'" in e for e in errors(building.replace("    stage: building\n", "")))
+    only_building = building.replace("status: being-built", "status: built")
+    assert any("finished entry" in e for e in errors(only_building))

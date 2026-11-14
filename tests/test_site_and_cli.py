@@ -335,3 +335,20 @@ def test_a_real_browser_prints_a_pdf_when_one_is_installed(tmp_path):
     site.build([idea()], out, SITE, REPO, chrome=chrome)
     data = (out / "ideas/OOT-0007/v1/OOT-0007v1.pdf").read_bytes()
     assert data.startswith(b"%PDF-") and len(data) > 3000
+
+
+def test_building_now_is_shown_apart_from_finished_projects(tmp_path):
+    text = GOOD.replace(
+        "status: open",
+        "status: being-built\nbuilt_from_this:\n  - name: Early prototype\n    by: Bo Builder\n"
+        "    stage: building\n    date: 2026-11-14\n  - name: Thing\n    url: https://thing.example\n"
+        "    by: Al Ready",
+    )
+    out = tmp_path / "site"
+    site.build([idea(text)], out, SITE, REPO)
+    page = (out / "ideas/OOT-0007/index.html").read_text()
+    now = page.split("<h2>Building now</h2>")[1].split("</section>")[0]
+    done = page.split("<h2>Built from this</h2>")[1].split("</section>")[0]
+    assert "Early prototype by Bo Builder (since 2026-11-14)" in now and "Thing" not in now
+    assert "Thing</a> by Al Ready" in done and "Early prototype" not in done
+    assert '<span class="chip building">1 building</span>' in (out / "index.html").read_text()
