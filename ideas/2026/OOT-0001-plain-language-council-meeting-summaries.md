@@ -4,7 +4,11 @@ title: Plain-language summaries of every city council meeting
 authors:
   - name: Example Author
 submitted: 2026-11-14
-status: open
+status: being-built
+built_from_this:
+  - name: Notify test
+    by: Test Builder
+    stage: building
 category: civic
 tags: [civic-tech, summarisation, local-news]
 why_unfinished: [llm-api-cost, time]
