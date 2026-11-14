@@ -25,12 +25,18 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: pip install -r requirements.txt
+      # The PDF of each version is printed by the Chrome that the runner ships.
+      # Noto fonts let it set scripts beyond Latin. Neither is needed for the
+      # site itself: without them the build still succeeds.
+      - name: Fonts for the PDF files
+        continue-on-error: true
+        run: sudo apt-get install -y --no-install-recommends fonts-noto-core fonts-noto-cjk
       - id: pages
         uses: actions/configure-pages@v6
       - name: Build
         env:
           SITE_URL: ${{ steps.pages.outputs.base_url }}
-        run: python -m out_of_tokens build --out _site --site-url "$SITE_URL"
+        run: python -m out_of_tokens build --out _site --site-url "$SITE_URL" --pdf auto
       - uses: actions/upload-pages-artifact@v5
         with:
           path: _site

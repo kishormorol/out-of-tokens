@@ -5,6 +5,7 @@ authors:
   - name: Example Author
 submitted: 2026-11-14
 status: open
+category: civic
 tags: [civic-tech, summarisation, local-news]
 why_unfinished: [llm-api-cost, time]
 estimated_cost: "Roughly USD 400 a month in LLM API calls for 50 cities (illustrative figure)"

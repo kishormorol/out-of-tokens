@@ -6,6 +6,7 @@ authors:
   - name: Second Example Author
 submitted: 2026-11-14
 status: open
+category: vision
 tags: [handwriting, ocr, open-model, fine-tuning]
 why_unfinished: [gpu-cost, data-cost]
 estimated_cost: "About 300 GPU-hours on a 24 GB card, plus labelling 5,000 cards (illustrative figure)"

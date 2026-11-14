@@ -1,7 +1,8 @@
-# Optional. For each idea on main that has no proof yet, freezes a copy of the
-# file under proofs/<id>/ and stamps it with OpenTimestamps (free, no account).
-# Also tries to complete proofs that were still pending. The result comes as a
-# pull request, so main can stay protected.
+# Optional. For each version of each idea on main that has no proof yet,
+# freezes a copy of the file under proofs/<id>/ and stamps it with
+# OpenTimestamps (free, no account). Version 1 is proofs/<id>/idea.md and later
+# versions are proofs/<id>/v<N>.md. Also tries to complete proofs that were
+# still pending. The result comes as a pull request, so main can stay protected.
 #
 # Delete this file if you do not want it; nothing else depends on it.
 name: Timestamp
@@ -9,7 +10,7 @@ name: Timestamp
 on:
   push:
     branches: [main]
-    paths: ["ideas/**"]
+    paths: ["ideas/**", "versions/**"]
   workflow_dispatch:
 
 permissions:
@@ -30,20 +31,25 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
-      - run: pip install opentimestamps-client
+      - run: pip install opentimestamps-client -r requirements.txt
       - name: Stamp new ideas and upgrade pending proofs
         run: |
           shopt -s nullglob
-          for proof in proofs/*/idea.md.ots; do
+          for proof in proofs/*/*.ots; do
             ots upgrade "$proof" || true   # fails while Bitcoin has not confirmed it
             rm -f "$proof.bak"
           done
-          for file in ideas/*/OOT-*.md; do
-            id="$(basename "$file" | grep -oE '^OOT-[0-9]+')"
-            [ -e "proofs/$id/idea.md" ] && continue
+          # Each line is: id, version number, file that holds that version.
+          python -m out_of_tokens list-versions | while read -r id number file; do
+            if [ "$number" = "1" ]; then
+              target="proofs/$id/idea.md"
+            else
+              target="proofs/$id/v$number.md"
+            fi
+            [ -e "$target" ] && continue
             mkdir -p "proofs/$id"
-            cp "$file" "proofs/$id/idea.md"
-            ots stamp "proofs/$id/idea.md"
+            cp "$file" "$target"
+            ots stamp "$target"
           done
       - name: Open a pull request with the proofs
         run: |
@@ -59,4 +65,4 @@ jobs:
           git commit -m "Add or upgrade OpenTimestamps proofs"
           git push origin "$branch"
           gh pr create --head "$branch" --title "Add or upgrade OpenTimestamps proofs" \
-            --body "Adds proofs for newly merged ideas and completes pending ones. See proofs/README.md for how to verify them."
+            --body "Adds proofs for newly merged ideas and versions, and completes pending ones. See proofs/README.md for how to verify them."

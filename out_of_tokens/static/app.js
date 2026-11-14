@@ -1,12 +1,13 @@
-// Filtering on the index page and copy buttons on idea pages. The site works
+// Filtering on the index page, and the copy and print buttons on idea pages. The site works
 // without this file; it only adds convenience.
 (function () {
   var cards = Array.prototype.slice.call(document.querySelectorAll("#cards .card"));
-  if (cards.length) {
+  if (cards.length && document.getElementById("filters")) {
     var text = document.getElementById("f-text");
     var why = document.getElementById("f-why");
     var tag = document.getElementById("f-tag");
     var status = document.getElementById("f-status");
+    var category = document.getElementById("f-category");
     var count = document.getElementById("count");
     var empty = document.getElementById("empty");
 
@@ -21,6 +22,7 @@
         var ok =
           has(d.why, why.value) &&
           has(d.tags, tag.value) &&
+          (!category.value || d.category === category.value) &&
           (!status.value || d.status === status.value) &&
           (!query || d.text.indexOf(query) !== -1);
         card.hidden = !ok;
@@ -29,11 +31,17 @@
       count.textContent = shown + (shown === 1 ? " idea" : " ideas");
       empty.hidden = shown !== 0;
     };
-    [text, why, tag, status].forEach(function (el) {
+    [text, category, why, tag, status].forEach(function (el) {
       el.addEventListener("input", apply);
     });
     apply();
   }
+
+  Array.prototype.forEach.call(document.querySelectorAll(".print-btn"), function (button) {
+    button.addEventListener("click", function () {
+      window.print();
+    });
+  });
 
   Array.prototype.forEach.call(document.querySelectorAll(".copy-btn"), function (button) {
     button.addEventListener("click", function () {

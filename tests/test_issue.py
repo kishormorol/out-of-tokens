@@ -14,9 +14,11 @@ def form_body(**overrides):
     answers = {
         "Idea title": "Summaries of council meetings",
         "Authors": "Ada Example @ada-example 0000-0002-1825-0097 https://ada.example\nSecond Person",
+        "Subject category": "civic",
         "Tags": "Civic Tech, summarisation",
         "Why is it unfinished?": "llm-api-cost, time",
         "Estimated cost to build": "USD 400 a month",
+        "Abstract": "_No response_",
         "Problem": "Meetings are long.",
         "Idea": "Summarise them.",
         "Approach": "Transcribe, then summarise.",
@@ -43,6 +45,9 @@ def test_form_labels_match_the_issue_template():
     assert fields == list(issue.FIELDS)
     dropdown = next(b for b in template["body"] if b.get("id") == "why_unfinished")
     assert tuple(dropdown["attributes"]["options"]) == ideas.WHY_UNFINISHED
+    dropdown = next(b for b in template["body"] if b.get("id") == "category")
+    assert tuple(dropdown["attributes"]["options"]) == tuple(ideas.CATEGORIES)
+    assert "multiple" not in dropdown["attributes"]  # one category per idea
 
 
 def test_build_idea_round_trip():
@@ -52,6 +57,8 @@ def test_build_idea_round_trip():
     assert idea.errors == []
     assert idea.meta["submitted"] == dt.date(2026, 11, 3)  # the day the issue was opened
     assert idea.meta["status"] == "open"
+    assert idea.meta["category"] == "civic"
+    assert "abstract" not in idea.meta and "versions" not in idea.meta
     assert idea.meta["tags"] == ["civic-tech", "summarisation"]
     assert idea.meta["why_unfinished"] == ["llm-api-cost", "time"]
     assert idea.meta["authors"] == [
@@ -101,6 +108,8 @@ def test_hostile_text_cannot_break_out_of_the_front_matter():
         ({"Idea title": "Hey"}, "'title' must be"),
         ({"Tags": "!!!"}, "'tags' must be"),
         ({"Why is it unfinished?": "boredom"}, "must be one of"),
+        ({"Subject category": "cooking"}, "'category' must be one of"),
+        ({"Abstract": "x" * 1501}, "'abstract' must be plain text"),
         ({"Approach": "_No response_"}, "## Approach"),
     ],
 )
@@ -128,3 +137,22 @@ def test_empty_whats_done_becomes_nothing_yet():
     idea = ideas.load_text(path, text, dt.date(2026, 11, 14))
     assert idea.errors == []
     assert "## What's done\n\nNothing yet." in text
+
+
+def test_abstract_is_kept_as_one_plain_line():
+    _, text = issue.build_idea(
+        gh_issue(Abstract="Meetings are long:\r\n\r\n  nobody reads the minutes. # not a comment"), "OOT-0003"
+    )
+    meta, _ = ideas.split_front_matter(text)
+    assert meta["abstract"] == "Meetings are long: nobody reads the minutes. # not a comment"
+
+
+def test_issue_from_the_older_form_is_refused_for_the_missing_category_only():
+    blocks = gh_issue()["body"].split("\r\n\r\n### ")
+    old_form = "\r\n\r\n### ".join(
+        b for b in blocks if not b.startswith(("Subject category", "Abstract"))
+    )
+    assert "### Idea title" in old_form and "category" not in old_form
+    with pytest.raises(issue.IssueError) as caught:
+        issue.build_idea({**gh_issue(), "body": old_form}, "OOT-0003")
+    assert str(caught.value) == "- 'category' must be one of " + ", ".join(ideas.CATEGORIES)

@@ -11,6 +11,7 @@ body:
         - Everything you write here is **public and permanent**. Do not share anything you want to keep secret, patent later, or that belongs to an employer or client.
         - Your text is published under **CC BY 4.0**. Anyone may build the idea. This project asks builders to credit you, and keeps a public record that you shared it first, but **no licence can force someone to credit an idea**. See the README section "What this can and cannot do".
         - A maintainer reviews the issue. When it is accepted, a pull request adds it to the registry with the next free id.
+        - You can revise the idea later. Each revision is a new dated version, and earlier versions stay readable.
   - type: input
     id: title
     attributes:
@@ -29,6 +30,28 @@ body:
         Second Person
     validations:
       required: false
+  - type: dropdown
+    id: category
+    attributes:
+      label: Subject category
+      description: |
+        Choose the one that fits best. nlp is language and text, vision is images and video, speech is speech and audio, dev-tools is developer tools, data is data and infrastructure, civic is civic and public interest, creative is creative work and media. Tags below can say the rest.
+      options:
+        - nlp
+        - vision
+        - speech
+        - health
+        - education
+        - science
+        - dev-tools
+        - data
+        - robotics
+        - finance
+        - civic
+        - creative
+        - other
+    validations:
+      required: true
   - type: input
     id: tags
     attributes:
@@ -63,6 +86,13 @@ body:
       placeholder: About USD 3,000 in API calls for the first evaluation run
     validations:
       required: true
+  - type: textarea
+    id: abstract
+    attributes:
+      label: Abstract
+      description: Optional. Two to five plain sentences, at most 1500 characters, with no formatting. If you leave it empty, the idea page uses the first paragraphs of Problem and Idea.
+    validations:
+      required: false
   - type: textarea
     id: problem
     attributes:

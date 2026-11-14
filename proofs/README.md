@@ -6,9 +6,13 @@ This folder is optional. It is filled by the `Timestamp` workflow, which uses
 For each idea the workflow stores two files:
 
 - `proofs/<id>/idea.md`: a frozen copy of the idea file as it was when it was merged.
+  This is version 1.
 - `proofs/<id>/idea.md.ots`: a proof that this exact file existed at a certain time. The
   proof is anchored in the Bitcoin blockchain, so it does not depend on GitHub or on the
   maintainers of this repository.
+
+When an idea is revised, each later version gets its own pair, `proofs/<id>/v2.md` and
+`proofs/<id>/v2.md.ots`, and so on.
 
 ## Verify a proof
 
